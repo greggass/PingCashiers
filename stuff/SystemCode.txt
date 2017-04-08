@@ -1,0 +1,23 @@
+package org.cityofchicago.dor.system;
+
+public enum SystemCode {
+	ERR_DB_CONNECTION("ERROR: DatabaseConnection "),
+	ERR_NO_ARG("ERROR: No arg passed "),
+	ERR_UNKNOWN_HOST("ERROR: Unknown Host "),
+	ERR_UNKNOWN("ERROR: Unknown "),
+	SYSTEM_OK("Ok"),
+	SYSTEM_SHUTDOWN("ShutDown"),
+	SYSTEM_UPDATED("Updated"),
+	DATE_FORMAT("MMddyyyy HH:mm:ss"),
+	;
+	private final String description;
+	
+	private SystemCode(String description) {
+		this.description = description;
+		
+	}
+
+	public String getDescription() {
+		return description;
+	}
+}

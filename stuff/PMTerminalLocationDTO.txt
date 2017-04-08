@@ -1,0 +1,38 @@
+package org.cityofchicago.dor.system;
+
+import java.io.Serializable;
+
+public class PMTerminalLocationDTO implements Serializable{
+
+	private static final long serialVersionUID = 1L;
+	
+	private String ipAddress;
+	
+	private String pingAttemptedDt;
+	
+	private String pingResult;
+
+	public String getIpAddress() {
+		return ipAddress;
+	}
+
+	public void setIpAddress(String ipAddress) {
+		this.ipAddress = ipAddress;
+	}
+
+	public String getPingAttemptedDt() {
+		return pingAttemptedDt;
+	}
+
+	public void setPingAttemptedDt(String pingAttemptedDt) {
+		this.pingAttemptedDt = pingAttemptedDt;
+	}
+
+	public String getPingResult() {
+		return pingResult;
+	}
+
+	public void setPingResult(String pingResult) {
+		this.pingResult = pingResult;
+	}
+}

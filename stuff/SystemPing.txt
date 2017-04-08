@@ -1,0 +1,126 @@
+package org.cityofchicago.dor.system;
+
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+
+public class SystemPing {
+
+	final List<PMTerminalLocationDTO> resultList = new ArrayList<PMTerminalLocationDTO>();
+	protected static String targetConnection; 
+	
+	public static void main(String[] args) {
+		 System.out.println("Started System Ping: " + getTime() + " **");
+		 pingTerminals(args);
+		 System.out.println("Ended System Ping: " + getTime() + "**");
+	}
+
+	protected static void pingTerminals(String[] args) {
+		try {            
+			 targetConnection = args[0];
+			 updatePMTerminalLocation(getIPAdressWithTerminalStatus());
+	          
+	      }
+	      catch (SQLException ex) {
+	    	  	System.out.println(SystemCode.ERR_DB_CONNECTION.getDescription());
+	            throw new RuntimeException(SystemCode.ERR_DB_CONNECTION.getDescription() + ex,ex);
+	      }
+	      catch(ArrayIndexOutOfBoundsException ex) {
+	    	  System.out.println(SystemCode.ERR_NO_ARG.getDescription());
+	    	  throw new RuntimeException(SystemCode.ERR_NO_ARG.getDescription() + ex,ex);
+	      }
+	      catch(UnknownHostException ex) {
+	    	  System.out.println(SystemCode.ERR_UNKNOWN_HOST.getDescription());
+	    	  throw new RuntimeException(SystemCode.ERR_UNKNOWN_HOST.getDescription() + ex,ex);
+	      }
+	      catch (Exception ex) {
+	    	  System.out.println(SystemCode.ERR_UNKNOWN.getDescription());
+	            throw new RuntimeException(SystemCode.ERR_UNKNOWN.getDescription() + ex,ex);
+	      }
+	}
+
+	protected static List<PMTerminalLocationDTO> getIPAdressWithTerminalStatus() throws SQLException,	UnknownHostException, IOException {
+		
+		List<PMTerminalLocationDTO> resultList = preparePMTerminalLocationList();
+		
+		for(PMTerminalLocationDTO pmTerminalLocationDTO : resultList){
+			
+			InetAddress inet = InetAddress.getByName(pmTerminalLocationDTO.getIpAddress());
+		    
+		     if (inet.isReachable(5000)) {	//Timeout = 5000 milli seconds
+		      	System.out.println(pmTerminalLocationDTO.getIpAddress() + ": " + SystemCode.SYSTEM_OK.getDescription() + " **");
+		      	pmTerminalLocationDTO.setPingResult(SystemCode.SYSTEM_OK.getDescription());
+		     } else {	
+		       	System.out.println(pmTerminalLocationDTO.getIpAddress() + ": " + SystemCode.SYSTEM_SHUTDOWN.getDescription() + " **");
+		       	pmTerminalLocationDTO.setPingResult(SystemCode.SYSTEM_SHUTDOWN.getDescription());
+		     }
+		     pmTerminalLocationDTO.setPingAttemptedDt(getTime());
+		}
+		
+		return resultList;
+	}
+
+	protected static List<PMTerminalLocationDTO> preparePMTerminalLocationList()
+			throws SQLException, UnknownHostException, IOException {
+		
+		Connection connection =  DatabaseConnection.createDatabaseConnection(targetConnection);
+		
+		List<PMTerminalLocationDTO> resultList = new ArrayList<PMTerminalLocationDTO>(0);
+		
+		StringBuffer selctQuery = new StringBuffer();
+		selctQuery.append("SELECT ip_Address FROM PM_Terminal_Location WHERE Pos_Secure_Pc = 'Y'");
+		
+		PreparedStatement ps = connection.prepareStatement(selctQuery.toString());
+		ResultSet rs = ps.executeQuery();
+		 
+		while (rs.next()) {
+			 PMTerminalLocationDTO pmTerminalLocationDTO = new PMTerminalLocationDTO();
+		     
+			 pmTerminalLocationDTO.setIpAddress(rs.getString(1));
+	          
+	         resultList.add(pmTerminalLocationDTO);
+		}
+		
+		rs.close();
+		ps.close();
+		connection.close();
+		return resultList;
+	}
+	
+	protected static void updatePMTerminalLocation(List<PMTerminalLocationDTO> resultList) throws SQLException{
+		
+		for(PMTerminalLocationDTO pmTerminalLocationDTO : resultList){
+			
+			String updateQuery = "UPDATE PM_Terminal_Location SET ping_attempted_dt = To_Date('" +
+								  pmTerminalLocationDTO.getPingAttemptedDt()+ "','mmddyyyy hh24:mi:ss'),ping_result = '" +
+								  pmTerminalLocationDTO.getPingResult()+"' WHERE ip_address = '" + pmTerminalLocationDTO.getIpAddress()+"'";
+			
+			Connection connection =  DatabaseConnection.createDatabaseConnection(targetConnection);
+			PreparedStatement ps = connection.prepareStatement(updateQuery.toString());
+			
+			int nbrRowsUpdated = ps.executeUpdate();
+			
+			if ( nbrRowsUpdated > 0 ) {
+				 connection.commit();
+				 System.out.println(pmTerminalLocationDTO.getIpAddress() + ": " + SystemCode.SYSTEM_UPDATED.getDescription() + " **");
+             }
+
+			ps.close();
+			connection.close();
+		}
+		
+	}
+	
+	protected static String getTime(){
+		return new SimpleDateFormat(SystemCode.DATE_FORMAT.getDescription()).format(Calendar.getInstance().getTime());
+	}
+
+}

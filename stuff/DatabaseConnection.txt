@@ -1,0 +1,22 @@
+package org.cityofchicago.dor.system;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.Locale;
+import java.util.ResourceBundle;
+
+// Create the Database Connection class.
+public class DatabaseConnection  {     
+   public static Connection createDatabaseConnection(String args) throws SQLException {        
+          ResourceBundle rb = ResourceBundle.getBundle("Database", new Locale(args));                 
+          DriverManager.registerDriver(new oracle.jdbc.driver.OracleDriver());            
+          Connection conn = DriverManager.getConnection("jdbc:oracle:thin:@"                         
+                       + rb.getString("host")
+                       + ":"
+                       + rb.getString("port")
+                       + ":"
+                       + rb.getString("database"), rb.getString("user"), rb.getString("password"));                    
+         return conn;        
+   } 
+   }
