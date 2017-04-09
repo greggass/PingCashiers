@@ -1,8 +1,6 @@
 package local.fourstar.dao;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
+//import java.util.Date;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -15,7 +13,7 @@ import local.fourstar.model.TerminalLocation;
 public class TerminalLocationDao {
 
 	private static final EntityManagerFactory ENTITY_MANAGER_FACTORY = Persistence.createEntityManagerFactory("oracle_clas");
-	
+
 	// ==================================================
 	//     read - All Payment Manager terminals
 	// ==================================================
@@ -56,7 +54,7 @@ public class TerminalLocationDao {
 	// ==================================================
 	//     Update - Ping (Echo - port 7) results
 	// ==================================================
-	public static void update(String machineName, String pingResult, Date pingDate) {
+	public static void update( List<TerminalLocation> terminals ) {
 		
 		// Create an EntityManager
 		EntityManager manager = ENTITY_MANAGER_FACTORY.createEntityManager();
@@ -69,19 +67,23 @@ public class TerminalLocationDao {
 			// Begin the transaction
 			transaction.begin();
 
-			// Get a list of Applications
-			TerminalLocation terminal = manager.find(TerminalLocation.class, machineName);
-			
-			// Update the record
-			terminal.setPingAttemptedDt(pingDate);
-			terminal.setPingResult(pingResult);
-			
-			// Save the application
-			manager.persist(terminal);
-			
+			for (TerminalLocation terminal : terminals) {
+				
+				if ( terminal.getUpdateDatabase() == "Y" ) {
+					
+					// Find terminal
+					manager.find(TerminalLocation.class, terminal.getTerminalName());
+
+					// Save changes to terminal
+					manager.persist(terminal);
+				}
+
+			}
+
 			// Commit the transaction
 			transaction.commit();			
- 		} catch(Exception ex) {
+
+		} catch(Exception ex) {
 			// Roll back the changes
 			if (transaction != null) {
 				transaction.rollback();
@@ -94,3 +96,4 @@ public class TerminalLocationDao {
 		}
 	}
 }
+

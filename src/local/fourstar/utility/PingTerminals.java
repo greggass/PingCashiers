@@ -1,5 +1,9 @@
 package local.fourstar.utility;
 
+import java.net.InetAddress;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 import local.fourstar.dao.TerminalLocationDao;
@@ -7,25 +11,88 @@ import local.fourstar.model.TerminalLocation;
 
 public class PingTerminals {
 
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+    private static final DateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+//    private static final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+	
+    public static void main(String[] args) {
+    	
+    	TerminalLocationDao dao = new TerminalLocationDao();
+    	
+		// Get list of terminals to check
+		List<TerminalLocation> terminals = dao.read();
+		
+		if ( terminals != null ) {
 
-		System.out.println("=== Terminals ===");
-
-		List<TerminalLocation> terminals = TerminalLocationDao.read();
+			System.out.println("pingAllTerminals");
+			pingAllTerminals(terminals);
+			
+			System.out.println("update");
+			dao.update(terminals);
+			
+			System.out.println("listAllTerminals");
+			listAllTerminals(terminals);
+			
+		}		
+	}
+	
+    private static void pingAllTerminals( List<TerminalLocation> terminals) {
+    
 		if (terminals != null) {
+
+			Date currentDate = new Date();			
+			System.out.println("Current Date = " + sdf.format(currentDate));
+	
+			try {
+	
+				for (TerminalLocation terminal : terminals) {
+
+					System.out.println("Terminal -- " + terminal.getTerminalName() );
+					
+					InetAddress inet = InetAddress.getByName( terminal.getIpAddress() );
+							
+					// Check that machine exists
+					// Uses Echo (port 7) for check
+					if ( inet.isReachable(5000) ) {			// Timeout = 5000 milliseconds
+						terminal.setPingResult("OK");
+					} else {
+						terminal.setPingResult("Shutdown");
+					}
+						
+					// Ping Attempted = Now
+					terminal.setPingAttemptedDt(currentDate);
+					
+					// Update result in database
+					terminal.setUpdateDatabase("Y");	
+				}
+	
+			} catch ( Exception ex ) {
+	
+						// Print the exception
+						ex.printStackTrace();
+			}
+		}
+    }
+
+	private static void listAllTerminals( List<TerminalLocation> terminals) {
+	
+		if (terminals != null) {
+			
+			System.out.println("=== Terminals MySql ===");
+			
 			for (TerminalLocation terminal : terminals) {
-				System.out.println( padRightSpaces(terminal.getTerminalName(), 35)
-						+ padRightSpaces(terminal.getMachineName(), 10)
-						+ padRightSpaces(terminal.getIpAddress(),15)
+	
+				System.out.println( padRightSpaces(terminal.getTerminalName(), 38)
+						+ padRightSpaces(terminal.getMachineName(), 13)
+						+ padRightSpaces(terminal.getIpAddress(),18)
 						+ padRightSpaces(terminal.getPosSecurePc(),3)
 						+ padRightSpaces(terminal.getPingResult(),10)
-						+ terminal.getPingAttemptedDt().toString()
+						+ padRightSpaces(terminal.getPingAttemptedDt(),15)
+						+ padRightSpaces(terminal.getUpdateDatabase(),5)
 						);
 			}
 		}
-	}
-	
+    }
+    
 	private static String padRightSpaces ( String str, int n ) {
 		return String.format("%1$-" + n + "s", str);
 		
