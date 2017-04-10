@@ -4,10 +4,10 @@
 		<provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
 		<class>local.fourstar.model.TerminalLocation</class>
 		<properties>
-			<property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/clas"/>
+			<property name="javax.persistence.jdbc.url" value="jdbc:oracle:thin:@dc07oru55:1526:clasuat"/>
 			<property name="javax.persistence.jdbc.user" value="gregg"/>
-			<property name="javax.persistence.jdbc.password" value="password"/>
-			<property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver"/>
+			<property name="javax.persistence.jdbc.password" value="Hot3#aQUapam"/>
+			<property name="javax.persistence.jdbc.driver" value="oracle.jdbc.OracleDriver"/>
 		</properties>
 	</persistence-unit>
 </persistence>

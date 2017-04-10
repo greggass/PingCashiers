@@ -19,7 +19,7 @@ public class TerminalLocation implements Serializable {
 	
 	private static final DateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 
-	@Id
+	@Id                                                                                                                                                                                                                        
 	@Column(name="TERMINAL_NAME", insertable=false, updatable=false)
 	private String terminalName;
 

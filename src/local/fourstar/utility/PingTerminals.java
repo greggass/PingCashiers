@@ -16,10 +16,10 @@ public class PingTerminals {
 	
     public static void main(String[] args) {
     	
-    	TerminalLocationDao dao = new TerminalLocationDao();
+//    	TerminalLocationDao dao = new TerminalLocationDao();
     	
 		// Get list of terminals to check
-		List<TerminalLocation> terminals = dao.read();
+		List<TerminalLocation> terminals = TerminalLocationDao.read();
 		
 		if ( terminals != null ) {
 
@@ -27,7 +27,10 @@ public class PingTerminals {
 			pingAllTerminals(terminals);
 			
 			System.out.println("update");
-			dao.update(terminals);
+			TerminalLocationDao.update(terminals);
+
+// TODO Tie into  ACTIVE.ORACLE_DB_SYNC_LOG
+// TODO Log Error when IP address fails to match
 			
 			System.out.println("listAllTerminals");
 			listAllTerminals(terminals);
@@ -37,38 +40,46 @@ public class PingTerminals {
 	
     private static void pingAllTerminals( List<TerminalLocation> terminals) {
     
-		if (terminals != null) {
+ 		if (terminals != null) {
 
 			Date currentDate = new Date();			
 			System.out.println("Current Date = " + sdf.format(currentDate));
 	
-			try {
-	
-				for (TerminalLocation terminal : terminals) {
+			for (TerminalLocation terminal : terminals) {
 
-					System.out.println("Terminal -- " + terminal.getTerminalName() );
+				System.out.println("Terminal -- " + terminal.getTerminalName() );
+				
+				try {
+					InetAddress inet = InetAddress.getByName( terminal.getMachineName() );
+
+//					System.out.println("Terminal:  " + terminal.getMachineName() + " - " + terminal.getIpAddress() + " - " + inet.getHostAddress() ); 
 					
-					InetAddress inet = InetAddress.getByName( terminal.getIpAddress() );
+					if ( terminal.getIpAddress().trim().equals( new String ( inet.getHostAddress().trim() ) ) ) {
+
+						// Check that machine exists
+						// Uses Echo (port 7) for check
+						if ( inet.isReachable(5000) ) {			// Timeout = 5000 milliseconds
+							terminal.setPingResult("Wow3");
+						} else {
+							terminal.setPingResult("Sodapop");
+						}
 							
-					// Check that machine exists
-					// Uses Echo (port 7) for check
-					if ( inet.isReachable(5000) ) {			// Timeout = 5000 milliseconds
-						terminal.setPingResult("OK");
-					} else {
-						terminal.setPingResult("Shutdown");
-					}
+						// Ping Attempted = Now
+						terminal.setPingAttemptedDt(currentDate);
 						
-					// Ping Attempted = Now
-					terminal.setPingAttemptedDt(currentDate);
-					
-					// Update result in database
-					terminal.setUpdateDatabase("Y");	
+						// Update result in database
+						terminal.setUpdateDatabase("Y");	
+						
+					} else {
+						System.out.println("IP Address mismatch: " + terminal.getMachineName() + " - " + terminal.getIpAddress() + " - " + inet.getHostAddress() ); 
+					}
+
+				} catch ( Exception ex ) {
+					// Print the exception
+					//ex.printStackTrace();
+
+					System.out.println("ERROR:  Terminal -- " + terminal.getTerminalName() );
 				}
-	
-			} catch ( Exception ex ) {
-	
-						// Print the exception
-						ex.printStackTrace();
 			}
 		}
     }

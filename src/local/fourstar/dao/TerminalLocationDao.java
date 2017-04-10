@@ -72,10 +72,10 @@ public class TerminalLocationDao {
 				if ( terminal.getUpdateDatabase() == "Y" ) {
 					
 					// Find terminal
-					manager.find(TerminalLocation.class, terminal.getTerminalName());
+//					manager.find(TerminalLocation.class, terminal.getTerminalName());
 
 					// Save changes to terminal
-					manager.persist(terminal);
+					manager.merge(terminal);
 				}
 
 			}
